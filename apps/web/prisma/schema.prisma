@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String    @unique
+  name                  String?
+  role                  String?   @default("free")
+  subscriptionExpiresAt DateTime? @map("subscription_expires_at")
+  createdAt             DateTime? @default(now()) @map("created_at")
+
+  trackedAccounts       TrackedAccount[]
+  watchlistItems        WatchlistItem[]
+  hypeScoreRequests     HypeScoreRequest[]
+
+  @@map("users")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String
+  slug     String    @unique
+  hashtags Hashtag[]
+  sounds   Sound[]
+
+  @@map("categories")
+}
+
+model Hashtag {
+  id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tag        String            @unique
+  categoryId Int?              @map("category_id")
+  category   Category?         @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime?         @default(now()) @map("created_at")
+  snapshots  HashtagSnapshot[]
+
+  @@map("hashtags")
+}
+
+model HashtagSnapshot {
+  id         BigInt    @id @default(autoincrement())
+  hashtagId  String?   @map("hashtag_id") @db.Uuid
+  hashtag    Hashtag?  @relation(fields: [hashtagId], references: [id])
+  viewCount  BigInt    @map("view_count")
+  videoCount BigInt?   @map("video_count")
+  fetchedAt  DateTime? @default(now()) @map("fetched_at")
+
+  @@map("hashtag_snapshots")
+}
+
+model Sound {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tiktokSoundId String          @unique @map("tiktok_sound_id")
+  title         String?
+  author        String?
+  categoryId    Int?            @map("category_id")
+  category      Category?       @relation(fields: [categoryId], references: [id])
+  snapshots     SoundSnapshot[]
+
+  @@map("sounds")
+}
+
+model SoundSnapshot {
+  id         BigInt    @id @default(autoincrement())
+  soundId    String?   @map("sound_id") @db.Uuid
+  sound      Sound?    @relation(fields: [soundId], references: [id])
+  usageCount BigInt    @map("usage_count")
+  fetchedAt  DateTime? @default(now()) @map("fetched_at")
+
+  @@map("sound_snapshots")
+}
+
+model TrackedAccount {
+  id            String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username      String            @unique
+  addedByUserId String?           @map("added_by_user_id") @db.Uuid
+  addedByUser   User?             @relation(fields: [addedByUserId], references: [id])
+  snapshots     AccountSnapshot[]
+
+  @@map("tracked_accounts")
+}
+
+model AccountSnapshot {
+  id                     BigInt          @id @default(autoincrement())
+  accountId              String?         @map("account_id") @db.Uuid
+  account                TrackedAccount? @relation(fields: [accountId], references: [id])
+  followerCount          BigInt?         @map("follower_count")
+  avgViews               BigInt?         @map("avg_views")
+  postingFrequencyPerWeek Float?         @map("posting_frequency_per_week")
+  fetchedAt              DateTime?       @default(now()) @map("fetched_at")
+
+  @@map("account_snapshots")
+}
+
+model WatchlistItem {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String?   @map("user_id") @db.Uuid
+  user      User?     @relation(fields: [userId], references: [id])
+  itemType  String    @map("item_type") // hashtag | sound | account
+  itemId    String    @map("item_id") @db.Uuid
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  @@map("watchlist_items")
+}
+
+model HypeScoreRequest {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String?   @map("user_id") @db.Uuid
+  user             User?     @relation(fields: [userId], references: [id])
+  videoUrl         String?   @map("video_url")
+  score            Float?
+  breakdown        Json?
+  createdAt        DateTime? @default(now()) @map("created_at")
+
+  @@map("hype_score_requests")
+}

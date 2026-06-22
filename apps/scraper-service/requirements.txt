@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+TikTokApi
+playwright
+redis
+httpx
+pydantic
+apscheduler
