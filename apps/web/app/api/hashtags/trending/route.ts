@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
+function getPrisma() {
+  if (!prisma) prisma = new PrismaClient();
+  return prisma;
+}
 
 export async function GET() {
   try {
-    const hashtags = await prisma.hashtag.findMany({
+    const prismaClient = getPrisma();
+    const hashtags = await prismaClient.hashtag.findMany({
       include: {
         snapshots: {
           orderBy: { fetchedAt: 'asc' },
@@ -34,12 +40,12 @@ export async function GET() {
        };
     });
 
-    const sounds = await prisma.sound.findMany({
+    const sounds = await prismaClient.sound.findMany({
       include: { snapshots: { orderBy: { fetchedAt: 'desc' }, take: 1 } },
       take: 5
     });
 
-    const categories = await prisma.category.findMany({
+    const categories = await prismaClient.category.findMany({
       take: 5
     });
 

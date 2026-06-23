@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
+export const dynamic = 'force-dynamic';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+let prisma: PrismaClient;
+function getPrisma() {
+  if (!prisma) prisma = new PrismaClient();
+  return prisma;
+}
 
 const TARGET_HASHTAGS = ['fyp', 'viral', 'tiktokindonesia'];
 
 export async function POST() {
   try {
+    const prismaClient = getPrisma();
     const results = [];
     
     for (const tag of TARGET_HASHTAGS) {
@@ -21,10 +27,10 @@ export async function POST() {
       }
       
       // Save to Database
-      let hashtag = await prisma.hashtag.findUnique({ where: { tag } });
+      let hashtag = await prismaClient.hashtag.findUnique({ where: { tag } });
       let isNew = false;
       if (!hashtag) {
-         hashtag = await prisma.hashtag.create({ data: { tag } });
+         hashtag = await prismaClient.hashtag.create({ data: { tag } });
          isNew = true;
       }
       
@@ -43,7 +49,7 @@ export async function POST() {
             const progress = i / daysDiff;
             const views = startViews + ((currentViews - startViews) * Math.pow(progress, 2));
             
-            await prisma.hashtagSnapshot.create({
+            await prismaClient.hashtagSnapshot.create({
                data: {
                   hashtagId: hashtag.id,
                   viewCount: Math.floor(views),
@@ -55,7 +61,7 @@ export async function POST() {
       }
 
       // Create Current Snapshot
-      await prisma.hashtagSnapshot.create({
+      await prismaClient.hashtagSnapshot.create({
          data: {
             hashtagId: hashtag.id,
             viewCount: data.view_count || 0,
