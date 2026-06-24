@@ -14,14 +14,29 @@ export default function HypeScorePage() {
     if (!url) return;
     
     setLoading(true);
-    setTimeout(() => {
-      setResult({
-        score: 87,
-        breakdown: { velocity: 92, trending_bonus: 25, category_avg: 78 },
-        detected: { hashtags: ["#fyp", "#tech2026"], sound: "Original Sound - ViralPulse", category: "Technology" }
+    try {
+      const response = await fetch('/api/predict', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
       });
+      
+      if (!response.ok) throw new Error('Failed to fetch prediction');
+      
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error(error);
+      setResult({
+        score: 0,
+        breakdown: { velocity: 0, trending_bonus: 0, category_avg: 0 },
+        detected: { hashtags: [], sound: "Error", category: "Error" }
+      });
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
